@@ -15,11 +15,11 @@ var Enquire = require('react-enquire');
 var Application = React.createClass({
   mixins : [
     Enquire.createHandler({
-      xs : 'max-width(479px)',
-      sm : 'min-width(480px) and max-width(767px)',
-      md : 'min-width(768px) and max-width(991px)',
-      lg : 'min-width(992px) and max-width(1199px)',
-      xg : 'min-width(1200px)',
+      visibleXs : 'max-width(479px)',
+      visibleSm : 'min-width(480px) and max-width(767px)',
+      visibleMd : 'min-width(768px) and max-width(991px)',
+      visibleLg : 'min-width(992px) and max-width(1199px)',
+      visibleXg : 'min-width(1200px)',
     }),
   ]
 });
@@ -32,8 +32,8 @@ Motivation: ```VeryComplexComponent``` has too many computation that not needed 
 ```javascript
 var Reflux = require('reflux'),
     Enquire = require('react-enquire'),
-    option = require('react-fantasy').option;
-
+    Option = require('fantasy-options').Option,
+    foldable = require('react-fantasy').foldable;
 
 var SomeComponent = React.createClass({
   mixins : [
@@ -48,9 +48,37 @@ var SomeComponent = React.createClass({
   },
   
   render : function() {
-    return option().withFallback(this.renderVeryComplexComponent).render(this.state.xs);
+    return foldable().then(this.renderNull).fail(this.renderVeryComplexComponent).exec(this.state.visibleXs);
+  }
+})
+
+var XsComponent = React.createClass({
+  mixins : [
+    Reflux.ListenerMixin,
+    Reflux.listenTo(Enquire.store, onMediaChanged)
+  ],
+  
+  onMediaChanged : function(mediaMathches) {
+    mediaMatches.visibleXs.isNot(this.state.visibleXs).map(Option.of).chain(this.updateState)
+  },
+  
+  updateState : function(visibleXs) {
+    this.setState({
+      visibleXs : visibleXs
+    });
+  }
+  
+  renderVeryComplexComponent : function () {
+    return (
+      <VeryComplexComponent />
+    )
+  },
+  
+  render : function() {
+    return foldable().then(this.renderNull).fail(this.renderVeryComplexComponent).exec(this.state.visibleXs);
   }
 })
 
 ```
 
+In this example ```XsComponent``` will react only for changes in ```visibleXs``` media query and will ignore others.
